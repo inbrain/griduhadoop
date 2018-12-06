@@ -1,0 +1,12 @@
+export
+--connect
+jdbc:mysql://127.0.0.1/course
+--username
+root
+--password
+cloudera
+--export-dir
+/user/hive/warehouse/course.db/bestcountryprices
+--table
+bestcountryprices
+
