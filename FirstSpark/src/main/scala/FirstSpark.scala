@@ -9,13 +9,11 @@ object FirstSpark extends App {
   val sConf = new SparkConf().setAppName("FirstSpark").setMaster("local[2]")
   val sContext = new SparkContext(sConf)
 
-  //create properties object
   val prop = new java.util.Properties
   prop.setProperty("driver", "com.mysql.jdbc.Driver")
   prop.setProperty("user", "root")
   prop.setProperty("password", "cloudera")
 
-  //jdbc mysql url - destination database is named "data"
   val url = "jdbc:mysql://localhost:3306/sparkcourse"
 
   val sqlContext = new SQLContext(sContext)
@@ -72,9 +70,13 @@ object FirstSpark extends App {
   blockWithLocation.registerTempTable("blockswithlocations")
   salesByCountry.registerTempTable("salesbycountry")
 
+  //Select top 10  most frequently purchased categories
   sqlContext.sql("select cat, x from (select cat, count(*) as x from maindata group by cat) as j order by x desc limit 10").
     write.mode(SaveMode.Overwrite).jdbc(url, "topcat", prop)
-
+  //Select top 10 most frequently purchased product in each category
+  sqlContext.sql("select distinct cat, name, x from (select cat, name, count(name) as x from maindata group by cat, name) as j order by x desc limit 10").
+    write.mode(SaveMode.Overwrite).jdbc(url, "topproducts", prop)
+  //Select top 10 countries with the highest money spending
   sqlContext.sql("select country_name, sum(price) as x from salesbycountry group by country_name order by x desc limit 10").
     write.mode(SaveMode.Overwrite).jdbc(url, "bestsellingcountries", prop)
 
