@@ -4,7 +4,7 @@ import org.apache.spark.sql.{SQLContext, SaveMode}
 import org.apache.spark.sql.types._
 
 
-object FirstSpark extends App {
+object FirstSparkSql extends App {
 
   val sConf = new SparkConf().setAppName("FirstSpark").setMaster("local[2]")
   val sContext = new SparkContext(sConf)
@@ -27,7 +27,8 @@ object FirstSpark extends App {
 
     sqlContext.read.format("com.databricks.spark.csv").
       option("header", "false").
-      schema(schema).load("hdfs://quickstart.cloudera:8020/user/cloudera/flumex/2000/01/*/F*")
+      schema(schema).load("hdfs://quickstart.cloudera:8020/user/cloudera/flumex/2000/01/*/F*").
+      repartition(2)
   }
 
   val blocksDf = {

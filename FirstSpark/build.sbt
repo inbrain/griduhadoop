@@ -16,7 +16,7 @@ assemblyMergeStrategy in assembly := {
   case _ => MergeStrategy.first
 }
 
-
+libraryDependencies += "com.typesafe" % "config" % "1.3.2"
 //for spark 1.6 
 
 
