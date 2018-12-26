@@ -13,17 +13,22 @@ flumex/2000/01 - is a folder containing date partitioned data
 
 ## Querying generated data
 Select top 10  most frequently purchased categories: `select cat, x from (select cat, count(*) as x from maindata group by cat) as j sort by x desc limit 10;`
-Select top 10 most frequently purchased product in each category: `select distinct cat, name, x from (select cat, name, count(name) over (partition by cat, name) as x from maindata) as j order by x desc limit 10;`
+
+Select top 10 most frequently purchased product in each category:`select cat, name, total from (select cat, name, total, row_number() over (partition by cat order by total desc) as x from (select cat, name, count(*) total from maindata group by cat, name) as prodsales) as in  where x < 2`
 
 ## Adding geo data
 `create external table locations (geoname_id int,locale_code varchar(255),continent_code varchar(255),continent_name varchar(255),country_iso_code varchar(255),country_name varchar(255),is_in_european_union boolean) row format delimited fields terminated by ',' STORED AS TEXTFILE location 'hdfs://quickstart.cloudera:8020/user/cloudera/geo/locations' tblproperties ("skip.header.line.count"="1");`
+
 `create external table blocks (network varchar(255),geoname_id int,registered_country_geoname_id int,represented_country_geoname_id int,is_anonymous_proxy int,is_satellite_provider int) row format delimited fields terminated by ',' STORED AS TEXTFILE location 'hdfs://quickstart.cloudera:8020/user/cloudera/geo/blocks' tblproperties ("skip.header.line.count"="1");`
 
 ## Joining sales and geo data 
 User Defined Function for joining data based on the fact whether IP belong to subnet is defined by HiveInSubnetUDF app. After we've built jar we do: 
 `add jar hdfs://quickstart.cloudera:8020/user/cloudera/udf.jar`
+
 `create temporary function in_subnet as 'myu.HiveUDF';`
+
 `create table salesbycountry as select m.*, l.country_name from locations l join blocks b on l.geoname_id = b.geoname_id join maindata m on true where in_subnet(b.network, m.ip);`
+
 Note: With newer versions of Hive it should actually be possible to use udf in JOIN 'ON' clause 
 
 Select top 10 countries with the highest money spending: `create table bestcountryprices row FORMAT DELIMITED FIELDS TERMINATED BY ','  as select country_name, sum(price) as x from salesbycountry group by country_name sort by x desc limit 10;`
